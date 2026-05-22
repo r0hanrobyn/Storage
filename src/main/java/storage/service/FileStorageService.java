@@ -1,0 +1,88 @@
+package storage.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import storage.model.FileMetadata;
+import storage.model.User;
+import storage.repository.FileMetadataRepository;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class FileStorageService {
+
+    private final FileMetadataRepository fileMetadataRepository;
+
+    @Value("${storage.location}")
+    private String storageLocation;
+
+    public FileMetadata store(MultipartFile file, User owner) throws IOException {
+        Path uploadDir = Paths.get(storageLocation);
+        Files.createDirectories(uploadDir);
+
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String storedFilename = UUID.randomUUID() + extension;
+
+        Path destination = uploadDir.resolve(storedFilename);
+        Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
+
+        FileMetadata metadata = FileMetadata.builder()
+                .originalFilename(originalFilename)
+                .storedFilename(storedFilename)
+                .contentType(file.getContentType())
+                .size(file.getSize())
+                .owner(owner)
+                .build();
+
+        return fileMetadataRepository.save(metadata);
+    }
+
+    public List<FileMetadata> listFiles(User owner) {
+        return fileMetadataRepository.findAllByOwner(owner);
+    }
+
+    public Resource loadAsResource(Long fileId, User owner) throws MalformedURLException {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwner(fileId, owner)
+                .orElseThrow(() -> new IllegalArgumentException("File not found or access denied"));
+
+        Path filePath = Paths.get(storageLocation).resolve(metadata.getStoredFilename());
+        Resource resource = new UrlResource(filePath.toUri());
+
+        if (!resource.exists() || !resource.isReadable()) {
+            throw new IllegalStateException("File is not readable: " + metadata.getOriginalFilename());
+        }
+        return resource;
+    }
+
+    public String getOriginalFilename(Long fileId, User owner) {
+        return fileMetadataRepository.findByIdAndOwner(fileId, owner)
+                .map(FileMetadata::getOriginalFilename)
+                .orElseThrow(() -> new IllegalArgumentException("File not found or access denied"));
+    }
+
+    public void delete(Long fileId, User owner) throws IOException {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwner(fileId, owner)
+                .orElseThrow(() -> new IllegalArgumentException("File not found or access denied"));
+
+        Path filePath = Paths.get(storageLocation).resolve(metadata.getStoredFilename());
+        Files.deleteIfExists(filePath);
+
+        fileMetadataRepository.delete(metadata);
+    }
+}
