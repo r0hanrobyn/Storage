@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/minicloud/uploads
+    environment:
+      - STORAGE_LOCATION=/minicloud/uploads
+
+volumes:
+  uploads:
