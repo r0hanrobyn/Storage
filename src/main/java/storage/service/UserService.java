@@ -6,6 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import storage.exception.UserAlreadyExistsException;
 import storage.model.User;
 import storage.repository.UserRepository;
 
@@ -32,10 +33,10 @@ public class UserService implements UserDetailsService {
 
     public User registerUser(String username, String email, String rawPassword) {
         if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username already taken: " + username);
+            throw new UserAlreadyExistsException("Username already taken: " + username);
         }
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already registered: " + email);
+            throw new UserAlreadyExistsException("Email already registered: " + email);
         }
 
         User user = User.builder()

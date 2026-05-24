@@ -15,8 +15,6 @@ import storage.model.User;
 import storage.service.FileStorageService;
 import storage.service.UserService;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.List;
 
 @RestController
@@ -30,7 +28,7 @@ public class FileController {
     @PostMapping("/upload")
     public ResponseEntity<FileResponse> upload(
             @RequestParam("file") MultipartFile file,
-            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         User owner = userService.findByUsername(userDetails.getUsername());
         FileMetadata metadata = fileStorageService.store(file, owner);
@@ -52,7 +50,7 @@ public class FileController {
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> download(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) throws MalformedURLException {
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         User owner = userService.findByUsername(userDetails.getUsername());
         Resource resource = fileStorageService.loadAsResource(id, owner);
@@ -68,7 +66,7 @@ public class FileController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
-            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         User owner = userService.findByUsername(userDetails.getUsername());
         fileStorageService.delete(id, owner);
