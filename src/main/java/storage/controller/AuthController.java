@@ -1,5 +1,7 @@
 package storage.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,7 @@ import storage.model.User;
 import storage.security.JwtUtils;
 import storage.service.UserService;
 
+@Tag(name = "Authentication", description = "Register and log in to receive a JWT")
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -23,6 +26,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
 
+    @Operation(summary = "Register a new user")
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         User user = userService.registerUser(
@@ -34,6 +38,7 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token, user.getUsername()));
     }
 
+    @Operation(summary = "Log in and receive a JWT")
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         Authentication auth = authenticationManager.authenticate(

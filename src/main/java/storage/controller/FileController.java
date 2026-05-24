@@ -1,5 +1,8 @@
 package storage.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +20,8 @@ import storage.service.UserService;
 
 import java.util.List;
 
+@Tag(name = "Files", description = "Upload, list, download, and delete files")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
@@ -25,6 +30,7 @@ public class FileController {
     private final FileStorageService fileStorageService;
     private final UserService userService;
 
+    @Operation(summary = "Upload a file")
     @PostMapping("/upload")
     public ResponseEntity<FileResponse> upload(
             @RequestParam("file") MultipartFile file,
@@ -35,6 +41,7 @@ public class FileController {
         return ResponseEntity.ok(FileResponse.from(metadata));
     }
 
+    @Operation(summary = "List all files owned by the current user")
     @GetMapping
     public ResponseEntity<List<FileResponse>> listFiles(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -47,6 +54,7 @@ public class FileController {
         return ResponseEntity.ok(files);
     }
 
+    @Operation(summary = "Download a file by ID")
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> download(
             @PathVariable Long id,
@@ -63,6 +71,7 @@ public class FileController {
                 .body(resource);
     }
 
+    @Operation(summary = "Delete a file by ID")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
