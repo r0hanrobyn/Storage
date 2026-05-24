@@ -9,6 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import storage.exception.FileStorageException;
 import storage.exception.ResourceNotFoundException;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.Set;
 import storage.model.FileMetadata;
 import storage.model.User;
@@ -20,7 +23,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -73,8 +75,8 @@ public class FileStorageService {
         }
     }
 
-    public List<FileMetadata> listFiles(User owner) {
-        return fileMetadataRepository.findAllByOwner(owner);
+    public Page<FileMetadata> listFiles(User owner, Pageable pageable) {
+        return fileMetadataRepository.findAllByOwner(owner, pageable);
     }
 
     public Resource loadAsResource(Long fileId, User owner) {

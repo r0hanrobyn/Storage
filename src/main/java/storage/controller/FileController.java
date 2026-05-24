@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -17,8 +20,6 @@ import storage.model.FileMetadata;
 import storage.model.User;
 import storage.service.FileStorageService;
 import storage.service.UserService;
-
-import java.util.List;
 
 @Tag(name = "Files", description = "Upload, list, download, and delete files")
 @SecurityRequirement(name = "bearerAuth")
@@ -41,16 +42,15 @@ public class FileController {
         return ResponseEntity.ok(FileResponse.from(metadata));
     }
 
-    @Operation(summary = "List all files owned by the current user")
+    @Operation(summary = "List all files owned by the current user (paginated)")
     @GetMapping
-    public ResponseEntity<List<FileResponse>> listFiles(
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<Page<FileResponse>> listFiles(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PageableDefault(size = 20) Pageable pageable) {
 
         User owner = userService.findByUsername(userDetails.getUsername());
-        List<FileResponse> files = fileStorageService.listFiles(owner)
-                .stream()
-                .map(FileResponse::from)
-                .toList();
+        Page<FileResponse> files = fileStorageService.listFiles(owner, pageable)
+                .map(FileResponse::from);
         return ResponseEntity.ok(files);
     }
 
