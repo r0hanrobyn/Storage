@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import storage.exception.FileStorageException;
 import storage.exception.ResourceNotFoundException;
+
+import java.util.Set;
 import storage.model.FileMetadata;
 import storage.model.User;
 import storage.repository.FileMetadataRepository;
@@ -25,23 +27,35 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class FileStorageService {
 
+    private static final Set<String> BLOCKED_EXTENSIONS = Set.of(
+            ".exe", ".sh", ".bat", ".cmd", ".ps1", ".php", ".jsp", ".py", ".rb"
+    );
+
     private final FileMetadataRepository fileMetadataRepository;
 
     @Value("${storage.location}")
     private String storageLocation;
 
     public FileMetadata store(MultipartFile file, User owner) {
+        if (file.isEmpty()) {
+            throw new FileStorageException("Cannot store an empty file");
+        }
+
+        String originalFilename = file.getOriginalFilename() != null ? file.getOriginalFilename() : "";
+        String lowerName = originalFilename.toLowerCase();
+        String extension = lowerName.contains(".")
+                ? lowerName.substring(lowerName.lastIndexOf("."))
+                : "";
+
+        if (BLOCKED_EXTENSIONS.contains(extension)) {
+            throw new FileStorageException("File type '" + extension + "' is not allowed");
+        }
+
         try {
             Path uploadDir = Paths.get(storageLocation);
             Files.createDirectories(uploadDir);
 
-            String originalFilename = file.getOriginalFilename();
-            String extension = "";
-            if (originalFilename != null && originalFilename.contains(".")) {
-                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-            }
             String storedFilename = UUID.randomUUID() + extension;
-
             Path destination = uploadDir.resolve(storedFilename);
             Files.copy(file.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
 
