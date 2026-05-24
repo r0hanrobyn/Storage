@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minicloud</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+/* ── Auth ── */
+.auth-wrapper { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; }
+.auth-card { background: white; border-radius: 14px; box-shadow: 0 4px 28px rgba(0,0,0,0.10); padding: 2.5rem; width: 100%; max-width: 420px; }
+.auth-logo { text-align: center; margin-bottom: 2rem; }
+.auth-logo h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.auth-logo p { color: #888; margin-top: 0.3rem; font-size: 0.9rem; }
+
+/* ── Tabs ── */
+.tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 1.5rem; }
+.tab { flex: 1; padding: 0.75rem; text-align: center; cursor: pointer; font-weight: 600; color: #aaa; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+.tab.active { color: #667eea; border-bottom-color: #667eea; }
+
+/* ── Forms ── */
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-size: 0.82rem; font-weight: 700; color: #555; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.03em; }
+input[type="text"], input[type="email"], input[type="password"] {
+  width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e2e2; border-radius: 8px;
+  font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa; }
+input:focus { border-color: #667eea; background: white; }
+.error-msg { color: #dc2626; font-size: 0.82rem; margin-top: 0.5rem; min-height: 1.1rem; }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.7rem 1.4rem; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+.btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; width: 100%; }
+.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.55; transform: none; cursor: not-allowed; }
+.btn-sm { padding: 0.38rem 0.8rem; font-size: 0.8rem; border-radius: 6px; }
+.btn-danger  { background: #fee2e2; color: #dc2626; border: none; }
+.btn-danger:hover  { background: #fecaca; }
+.btn-success { background: #d1fae5; color: #059669; border: none; }
+.btn-success:hover { background: #a7f3d0; }
+
+/* ── App shell ── */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── Header ── */
+.header { background: linear-gradient(135deg, #667eea, #764ba2); padding: 0 1.5rem; height: 62px; display: flex; align-items: center; justify-content: space-between; color: white; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
+.header-brand { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; }
+.header-brand span { opacity: 0.65; }
+.header-right { display: flex; align-items: center; gap: 1rem; }
+.user-pill { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 0.3rem 0.9rem; font-size: 0.85rem; font-weight: 600; }
+.btn-logout { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 0.38rem 0.9rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.btn-logout:hover { background: rgba(255,255,255,0.28); }
+
+/* ── Main ── */
+.main { flex: 1; padding: 2rem 1.5rem; max-width: 920px; margin: 0 auto; width: 100%; }
+
+/* ── Cards ── */
+.card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: #333; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+
+/* ── Profile grid ── */
+.profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+@media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr 1fr; } }
+.profile-item label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #bbb; }
+.profile-item .val { font-size: 0.95rem; font-weight: 500; color: #333; margin-top: 0.2rem; }
+
+/* ── Drop zone ── */
+.drop-zone { border: 2px dashed #c7d2fe; border-radius: 10px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8f9ff; }
+.drop-zone:hover, .drop-zone.dragover { border-color: #667eea; background: #eef0ff; }
+.drop-zone-icon { font-size: 2.4rem; }
+.drop-zone p { color: #777; font-size: 0.88rem; margin-top: 0.4rem; }
+.drop-zone strong { color: #667eea; }
+#fileInput { display: none; }
+
+/* ── Progress ── */
+.progress { height: 5px; background: #ede9fe; border-radius: 3px; margin-top: 0.9rem; overflow: hidden; display: none; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 3px; transition: width 0.3s ease; }
+
+/* ── Files ── */
+.files-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.file-count { font-size: 0.82rem; color: #aaa; font-weight: 500; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #aaa; padding: 0.5rem 0.75rem; border-bottom: 2px solid #f3f3f3; }
+td { padding: 0.85rem 0.75rem; border-bottom: 1px solid #f7f7f7; font-size: 0.88rem; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #fbfbff; }
+.file-name-cell { display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: #333; }
+.file-icon { font-size: 1.3rem; flex-shrink: 0; }
+.muted { color: #aaa; font-size: 0.82rem; }
+.file-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+
+/* ── Empty state ── */
+.empty { text-align: center; padding: 3rem 1rem; color: #ccc; }
+.empty .icon { font-size: 3rem; margin-bottom: 0.6rem; }
+.empty p { font-size: 0.9rem; }
+
+/* ── Pagination ── */
+.pagination { display: flex; gap: 0.4rem; justify-content: center; margin-top: 1.25rem; flex-wrap: wrap; }
+.pg-btn { padding: 0.38rem 0.75rem; border: 1.5px solid #e2e2e2; border-radius: 6px; background: white; cursor: pointer; font-size: 0.82rem; font-weight: 600; color: #666; transition: all 0.15s; }
+.pg-btn:hover:not(:disabled) { border-color: #667eea; color: #667eea; }
+.pg-btn.active { background: #667eea; border-color: #667eea; color: white; }
+.pg-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Toast ── */
+.toasts { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 9999; }
+.toast { padding: 0.7rem 1.1rem; border-radius: 8px; font-size: 0.86rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.13); animation: slideIn 0.25s ease; max-width: 280px; display: flex; align-items: center; gap: 0.5rem; }
+.toast-success { background: #d1fae5; color: #065f46; }
+.toast-error   { background: #fee2e2; color: #991b1b; }
+.toast-info    { background: #dbeafe; color: #1e40af; }
+@keyframes slideIn { from { transform: translateX(80px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── Spinner ── */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div class="toasts" id="toasts"></div>
+<input type="file" id="fileInput" multiple>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════════
+let token         = localStorage.getItem('mc_token');
+let refreshTok    = localStorage.getItem('mc_refresh');
+let currentUser   = null;
+let currentPage   = 0;
+
+// ═══════════════════════════════════════════════════════════════
+//  API LAYER
+// ═══════════════════════════════════════════════════════════════
+async function api(method, path, body = null, auth = true) {
+  const headers = {};
+  if (body && !(body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(body);
+  }
+  if (auth && token) headers['Authorization'] = 'Bearer ' + token;
+
+  let res = await fetch('/api' + path, { method, headers, body });
+
+  // Silent token refresh on 401
+  if (res.status === 401 && refreshTok && path !== '/auth/refresh') {
+    if (await tryRefresh()) {
+      headers['Authorization'] = 'Bearer ' + token;
+      res = await fetch('/api' + path, { method, headers, body });
+    } else { doLogout(); return; }
+  }
+
+  if (res.status === 204) return null;
+  const text = await res.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!res.ok) throw new Error(data?.message || 'Request failed (' + res.status + ')');
+  return data;
+}
+
+async function tryRefresh() {
+  try {
+    const d = await api('POST', '/auth/refresh', { refreshToken: refreshTok }, false);
+    token = d.token; refreshTok = d.refreshToken;
+    localStorage.setItem('mc_token',   token);
+    localStorage.setItem('mc_refresh', refreshTok);
+    return true;
+  } catch { return false; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TOASTS
+// ═══════════════════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  const el = Object.assign(document.createElement('div'), {
+    className: 'toast toast-' + type,
+    innerHTML: '<span>' + icons[type] + '</span> ' + msg
+  });
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════
+function fileIcon(ct) {
+  if (!ct) return '📄';
+  if (ct.startsWith('image/')) return '🖼️';
+  if (ct.startsWith('video/')) return '🎬';
+  if (ct.startsWith('audio/')) return '🎵';
+  if (ct.includes('pdf'))      return '📕';
+  if (ct.includes('zip') || ct.includes('compressed')) return '🗜️';
+  if (ct.startsWith('text/')) return '📝';
+  return '📄';
+}
+
+function fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function fmtDate(s) {
+  return new Date(s).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function esc(s) { return String(s).replace(/'/g, "\\'"); }
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════════
+function renderAuth(tab = 'login') {
+  document.getElementById('app').innerHTML = `
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <div class="auth-logo">
+          <h1>☁ Minicloud</h1>
+          <p>Your personal file storage</p>
+        </div>
+        <div class="tabs">
+          <div class="tab ${tab==='login'?'active':''}" onclick="renderAuth('login')">Log In</div>
+          <div class="tab ${tab==='register'?'active':''}" onclick="renderAuth('register')">Register</div>
+        </div>
+        ${tab === 'login' ? `
+          <form onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="lu" placeholder="your username" required autofocus>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="lp" placeholder="••••••••" required>
+            </div>
+            <div id="authErr" class="error-msg"></div>
+            <br>
+            <button class="btn btn-primary" id="authBtn">Log In</button>
+          </form>` : `
+          <form onsubmit="handleRegister(event)">
+            <div class="form-group">
+              <label>Username</label>
+              <input type="text" id="ru" placeholder="3–50 characters" required autofocus>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="re" placeholder="you@example.com" required>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input type="password" id="rp" placeholder="at least 6 characters" required>
+            </div>
+            <div id="authErr" class="error-msg"></div>
+            <br>
+            <button class="btn btn-primary" id="authBtn">Create Account</button>
+          </form>`}
+      </div>
+    </div>`;
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  setBusy('authBtn', true);
+  try {
+    saveAuth(await api('POST', '/auth/login',
+      { username: val('lu'), password: val('lp') }, false));
+    await loadDashboard();
+  } catch(err) {
+    document.getElementById('authErr').textContent = err.message;
+    setBusy('authBtn', false, 'Log In');
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  setBusy('authBtn', true);
+  try {
+    saveAuth(await api('POST', '/auth/register',
+      { username: val('ru'), email: val('re'), password: val('rp') }, false));
+    await loadDashboard();
+  } catch(err) {
+    document.getElementById('authErr').textContent = err.message;
+    setBusy('authBtn', false, 'Create Account');
+  }
+}
+
+function saveAuth(d) {
+  token = d.token; refreshTok = d.refreshToken;
+  localStorage.setItem('mc_token',   token);
+  localStorage.setItem('mc_refresh', refreshTok);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+async function loadDashboard() {
+  try { currentUser = await api('GET', '/users/me'); }
+  catch { currentUser = { username: '–', email: '–', createdAt: null }; }
+  renderShell();
+  setupUpload();
+  await loadFiles(0);
+}
+
+function renderShell() {
+  document.getElementById('app').innerHTML = `
+    <div class="app">
+      <header class="header">
+        <div class="header-brand">☁ Mini<span>cloud</span></div>
+        <div class="header-right">
+          <span class="user-pill">👤 ${currentUser?.username}</span>
+          <button class="btn-logout" onclick="handleLogout()">Log out</button>
+        </div>
+      </header>
+      <main class="main">
+
+        <!-- Profile -->
+        <div class="card">
+          <div class="card-title">👤 Profile</div>
+          <div class="profile-grid">
+            <div class="profile-item"><label>Username</label><div class="val">${currentUser?.username}</div></div>
+            <div class="profile-item"><label>Email</label><div class="val">${currentUser?.email}</div></div>
+            <div class="profile-item"><label>Member since</label><div class="val">${currentUser?.createdAt ? fmtDate(currentUser.createdAt) : '–'}</div></div>
+          </div>
+        </div>
+
+        <!-- Upload -->
+        <div class="card">
+          <div class="card-title">☁ Upload Files</div>
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="drop-zone-icon">📂</div>
+            <p><strong>Click to browse</strong> or drag &amp; drop files here</p>
+            <p style="margin-top:.3rem;font-size:.78rem;color:#bbb">Max 100 MB &nbsp;·&nbsp; No .exe .sh .bat .php files</p>
+          </div>
+          <div class="progress" id="prog"><div class="progress-bar" id="progBar" style="width:0%"></div></div>
+        </div>
+
+        <!-- Files -->
+        <div class="card">
+          <div class="files-header">
+            <div class="card-title" style="margin:0">📁 Your Files</div>
+            <span class="file-count" id="fileCount"></span>
+          </div>
+          <div id="fileList"><div class="empty"><div class="icon">⏳</div><p>Loading…</p></div></div>
+          <div class="pagination" id="pager"></div>
+        </div>
+
+      </main>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UPLOAD
+// ═══════════════════════════════════════════════════════════════
+function setupUpload() {
+  const zone  = document.getElementById('dropZone');
+  const input = document.getElementById('fileInput');
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', ()  => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    uploadFiles([...e.dataTransfer.files]);
+  });
+  input.addEventListener('change', () => { uploadFiles([...input.files]); input.value=''; });
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+  const prog = document.getElementById('prog');
+  const bar  = document.getElementById('progBar');
+  prog.style.display = 'block';
+  for (let i = 0; i < files.length; i++) {
+    bar.style.width = Math.round((i / files.length) * 100) + '%';
+    const fd = new FormData(); fd.append('file', files[i]);
+    try {
+      await api('POST', '/files/upload', fd);
+      toast('Uploaded ' + files[i].name, 'success');
+    } catch(err) { toast(files[i].name + ': ' + err.message, 'error'); }
+  }
+  bar.style.width = '100%';
+  setTimeout(() => { prog.style.display='none'; bar.style.width='0%'; }, 600);
+  await loadFiles(currentPage);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FILE LIST
+// ═══════════════════════════════════════════════════════════════
+async function loadFiles(page = 0) {
+  currentPage = page;
+  try {
+    const data = await api('GET', '/files?page='+page+'&size=10&sort=uploadedAt,desc');
+    document.getElementById('fileCount').textContent =
+      data.totalElements ? data.totalElements + ' file' + (data.totalElements !== 1 ? 's' : '') : '';
+    renderFiles(data.content);
+    renderPager(data);
+  } catch(err) { toast(err.message, 'error'); }
+}
+
+function renderFiles(files) {
+  const el = document.getElementById('fileList');
+  if (!files.length) {
+    el.innerHTML = `<div class="empty"><div class="icon">📭</div><p>No files yet — upload something!</p></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <table>
+      <thead><tr><th>Name</th><th>Size</th><th>Uploaded</th><th></th></tr></thead>
+      <tbody>${files.map(f => `
+        <tr>
+          <td><div class="file-name-cell"><span class="file-icon">${fileIcon(f.contentType)}</span>${f.originalFilename}</div></td>
+          <td><span class="muted">${fmtBytes(f.size)}</span></td>
+          <td><span class="muted">${fmtDate(f.uploadedAt)}</span></td>
+          <td>
+            <div class="file-actions">
+              <button class="btn btn-sm btn-success" onclick="downloadFile(${f.id},'${esc(f.originalFilename)}')">⬇ Download</button>
+              <button class="btn btn-sm btn-danger"  onclick="deleteFile(${f.id},'${esc(f.originalFilename)}')">🗑 Delete</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderPager(data) {
+  const el = document.getElementById('pager');
+  if (data.totalPages <= 1) { el.innerHTML = ''; return; }
+  let h = `<button class="pg-btn" onclick="loadFiles(${data.number-1})" ${data.first?'disabled':''}>‹</button>`;
+  for (let i = 0; i < data.totalPages; i++)
+    h += `<button class="pg-btn ${i===data.number?'active':''}" onclick="loadFiles(${i})">${i+1}</button>`;
+  h += `<button class="pg-btn" onclick="loadFiles(${data.number+1})" ${data.last?'disabled':''}>›</button>`;
+  el.innerHTML = h;
+}
+
+async function downloadFile(id, name) {
+  try {
+    const res = await fetch('/api/files/'+id+'/download', { headers: { 'Authorization': 'Bearer '+token } });
+    if (!res.ok) throw new Error('Download failed');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(await res.blob());
+    a.download = name; a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Downloaded ' + name, 'success');
+  } catch(err) { toast(err.message, 'error'); }
+}
+
+async function deleteFile(id, name) {
+  if (!confirm('Delete "' + name + '"?')) return;
+  try {
+    await api('DELETE', '/files/'+id);
+    toast('Deleted ' + name, 'success');
+    await loadFiles(currentPage);
+  } catch(err) { toast(err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOGOUT
+// ═══════════════════════════════════════════════════════════════
+async function handleLogout() {
+  try { await api('POST', '/auth/logout'); } catch {}
+  doLogout();
+}
+
+function doLogout() {
+  token = null; refreshTok = null; currentUser = null;
+  localStorage.removeItem('mc_token'); localStorage.removeItem('mc_refresh');
+  renderAuth('login'); toast('Logged out', 'info');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════════
+function val(id) { return document.getElementById(id).value; }
+function setBusy(id, busy, label) {
+  const b = document.getElementById(id);
+  b.disabled = busy;
+  b.innerHTML = busy ? '<span class="spinner"></span>' : label;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════
+token ? loadDashboard().catch(() => renderAuth()) : renderAuth();
+</script>
+</body>
+</html>

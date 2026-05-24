@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "minicloud",
+      "runtimeExecutable": "/usr/bin/bash",
+      "runtimeArgs": ["-c", "cd '/c/Users/2381861/OneDrive - Cognizant/storage/storage' && ./mvnw spring-boot:run"],
+      "port": 8080,
+      "autoPort": false
+    }
+  ]
+}
