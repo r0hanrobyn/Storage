@@ -23,7 +23,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* ── Forms ── */
 .form-group { margin-bottom: 1rem; }
 label { display: block; font-size: 0.82rem; font-weight: 700; color: #555; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.03em; }
-input[type="text"], input[type="email"], input[type="password"] {
+input[type="text"], input[type="email"], input[type="password"], input[type="number"] {
   width: 100%; padding: 0.7rem 1rem; border: 1.5px solid #e2e2e2; border-radius: 8px;
   font-size: 0.95rem; outline: none; transition: border-color 0.2s; background: #fafafa; }
 input:focus { border-color: #667eea; background: white; }
@@ -39,6 +39,10 @@ input:focus { border-color: #667eea; background: white; }
 .btn-danger:hover  { background: #fecaca; }
 .btn-success { background: #d1fae5; color: #059669; border: none; }
 .btn-success:hover { background: #a7f3d0; }
+.btn-info    { background: #dbeafe; color: #1d4ed8; border: none; }
+.btn-info:hover    { background: #bfdbfe; }
+.btn-outline { background: white; color: #667eea; border: 1.5px solid #667eea; width: auto; }
+.btn-outline:hover { background: #eef0ff; }
 
 /* ── App shell ── */
 .app { display: flex; flex-direction: column; min-height: 100vh; }
@@ -53,17 +57,29 @@ input:focus { border-color: #667eea; background: white; }
 .btn-logout:hover { background: rgba(255,255,255,0.28); }
 
 /* ── Main ── */
-.main { flex: 1; padding: 2rem 1.5rem; max-width: 920px; margin: 0 auto; width: 100%; }
+.main { flex: 1; padding: 2rem 1.5rem; max-width: 960px; margin: 0 auto; width: 100%; }
 
 /* ── Cards ── */
 .card { background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); padding: 1.5rem; margin-bottom: 1.5rem; }
 .card-title { font-size: 0.95rem; font-weight: 700; color: #333; margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
 
 /* ── Profile grid ── */
-.profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.25rem; }
 @media (max-width: 600px) { .profile-grid { grid-template-columns: 1fr 1fr; } }
 .profile-item label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #bbb; }
 .profile-item .val { font-size: 0.95rem; font-weight: 500; color: #333; margin-top: 0.2rem; }
+
+/* ── Quota bar ── */
+.quota-section { margin-top: 1rem; }
+.quota-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: #777; margin-bottom: 0.45rem; }
+.quota-bar-bg { height: 10px; background: #f0f0f0; border-radius: 5px; overflow: hidden; }
+.quota-bar-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease; background: linear-gradient(90deg, #667eea, #764ba2); }
+.quota-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+/* ── Password change ── */
+.pw-form { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-top: 1rem; }
+@media (max-width: 700px) { .pw-form { grid-template-columns: 1fr; } }
+.pw-form .form-group { margin-bottom: 0; }
 
 /* ── Drop zone ── */
 .drop-zone { border: 2px dashed #c7d2fe; border-radius: 10px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8f9ff; }
@@ -77,9 +93,15 @@ input:focus { border-color: #667eea; background: white; }
 .progress { height: 5px; background: #ede9fe; border-radius: 3px; margin-top: 0.9rem; overflow: hidden; display: none; }
 .progress-bar { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 3px; transition: width 0.3s ease; }
 
-/* ── Files ── */
-.files-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.file-count { font-size: 0.82rem; color: #aaa; font-weight: 500; }
+/* ── Files header with search ── */
+.files-toolbar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.files-toolbar .card-title { margin: 0; flex-shrink: 0; }
+.search-box { flex: 1; min-width: 160px; position: relative; }
+.search-box input { padding-left: 2.1rem; margin: 0; }
+.search-box .search-icon { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: #bbb; font-size: 0.9rem; pointer-events: none; }
+.file-count { font-size: 0.82rem; color: #aaa; font-weight: 500; margin-left: auto; white-space: nowrap; }
+
+/* ── Table ── */
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: #aaa; padding: 0.5rem 0.75rem; border-bottom: 2px solid #f3f3f3; }
 td { padding: 0.85rem 0.75rem; border-bottom: 1px solid #f7f7f7; font-size: 0.88rem; vertical-align: middle; }
@@ -88,7 +110,7 @@ tbody tr:hover td { background: #fbfbff; }
 .file-name-cell { display: flex; align-items: center; gap: 0.5rem; font-weight: 500; color: #333; }
 .file-icon { font-size: 1.3rem; flex-shrink: 0; }
 .muted { color: #aaa; font-size: 0.82rem; }
-.file-actions { display: flex; gap: 0.4rem; justify-content: flex-end; }
+.file-actions { display: flex; gap: 0.4rem; justify-content: flex-end; flex-wrap: wrap; }
 
 /* ── Empty state ── */
 .empty { text-align: center; padding: 3rem 1rem; color: #ccc; }
@@ -104,7 +126,7 @@ tbody tr:hover td { background: #fbfbff; }
 
 /* ── Toast ── */
 .toasts { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 9999; }
-.toast { padding: 0.7rem 1.1rem; border-radius: 8px; font-size: 0.86rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.13); animation: slideIn 0.25s ease; max-width: 280px; display: flex; align-items: center; gap: 0.5rem; }
+.toast { padding: 0.7rem 1.1rem; border-radius: 8px; font-size: 0.86rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.13); animation: slideIn 0.25s ease; max-width: 300px; display: flex; align-items: center; gap: 0.5rem; }
 .toast-success { background: #d1fae5; color: #065f46; }
 .toast-error   { background: #fee2e2; color: #991b1b; }
 .toast-info    { background: #dbeafe; color: #1e40af; }
@@ -113,6 +135,17 @@ tbody tr:hover td { background: #fbfbff; }
 /* ── Spinner ── */
 .spinner { display: inline-block; width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; flex-shrink: 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal { background: white; border-radius: 14px; box-shadow: 0 8px 40px rgba(0,0,0,0.18); padding: 2rem; width: 100%; max-width: 480px; }
+.modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+.share-link-box { background: #f8f9ff; border: 1.5px solid #c7d2fe; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.82rem; word-break: break-all; color: #374151; margin-top: 1rem; display: flex; align-items: center; gap: 0.75rem; }
+.share-link-box a { color: #667eea; text-decoration: none; flex: 1; }
+.share-link-box a:hover { text-decoration: underline; }
+.copy-btn { background: #667eea; color: white; border: none; border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+.copy-btn:hover { background: #5a72d4; }
 </style>
 </head>
 <body>
@@ -125,10 +158,12 @@ tbody tr:hover td { background: #fbfbff; }
 // ═══════════════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════════════
-let token         = localStorage.getItem('mc_token');
-let refreshTok    = localStorage.getItem('mc_refresh');
-let currentUser   = null;
-let currentPage   = 0;
+let token       = localStorage.getItem('mc_token');
+let refreshTok  = localStorage.getItem('mc_refresh');
+let currentUser = null;
+let currentPage = 0;
+let searchQuery = '';
+let quotaData   = null;
 
 // ═══════════════════════════════════════════════════════════════
 //  API LAYER
@@ -198,14 +233,15 @@ function fileIcon(ct) {
 function fmtBytes(b) {
   if (b < 1024) return b + ' B';
   if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
-  return (b/1048576).toFixed(1) + ' MB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(1) + ' GB';
 }
 
 function fmtDate(s) {
   return new Date(s).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
 
-function esc(s) { return String(s).replace(/'/g, "\\'"); }
+function esc(s) { return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
 // ═══════════════════════════════════════════════════════════════
 //  AUTH
@@ -295,6 +331,8 @@ function saveAuth(d) {
 async function loadDashboard() {
   try { currentUser = await api('GET', '/users/me'); }
   catch { currentUser = { username: '–', email: '–', createdAt: null }; }
+  try { quotaData = await api('GET', '/users/me/quota'); }
+  catch { quotaData = null; }
   renderShell();
   setupUpload();
   await loadFiles(0);
@@ -312,13 +350,46 @@ function renderShell() {
       </header>
       <main class="main">
 
-        <!-- Profile -->
+        <!-- Profile + Quota -->
         <div class="card">
           <div class="card-title">👤 Profile</div>
           <div class="profile-grid">
             <div class="profile-item"><label>Username</label><div class="val">${currentUser?.username}</div></div>
             <div class="profile-item"><label>Email</label><div class="val">${currentUser?.email}</div></div>
             <div class="profile-item"><label>Member since</label><div class="val">${currentUser?.createdAt ? fmtDate(currentUser.createdAt) : '–'}</div></div>
+          </div>
+
+          ${quotaData ? `
+          <div class="quota-section">
+            <div class="quota-label">
+              <span>💾 Storage — ${quotaData.usedFormatted} of ${quotaData.totalFormatted} used</span>
+              <span>${quotaData.percentUsed}%</span>
+            </div>
+            <div class="quota-bar-bg">
+              <div class="quota-bar-fill ${quotaData.percentUsed >= 80 ? 'warn' : ''}"
+                   style="width:${quotaData.percentUsed}%"></div>
+            </div>
+          </div>` : ''}
+
+          <!-- Change Password -->
+          <div style="margin-top:1.25rem;">
+            <div style="font-size:0.82rem;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.6rem;">🔒 Change Password</div>
+            <div class="pw-form">
+              <div class="form-group">
+                <label>Current Password</label>
+                <input type="password" id="pwCurrent" placeholder="current password">
+              </div>
+              <div class="form-group">
+                <label>New Password</label>
+                <input type="password" id="pwNew" placeholder="at least 6 chars">
+              </div>
+              <div class="form-group">
+                <label>Confirm New</label>
+                <input type="password" id="pwConfirm" placeholder="repeat new password">
+              </div>
+              <button class="btn btn-outline" id="pwBtn" onclick="handleChangePassword()">Update</button>
+            </div>
+            <div id="pwErr" class="error-msg"></div>
           </div>
         </div>
 
@@ -335,8 +406,13 @@ function renderShell() {
 
         <!-- Files -->
         <div class="card">
-          <div class="files-header">
+          <div class="files-toolbar">
             <div class="card-title" style="margin:0">📁 Your Files</div>
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="searchInput" placeholder="Search files…"
+                     oninput="onSearch(this.value)">
+            </div>
             <span class="file-count" id="fileCount"></span>
           </div>
           <div id="fileList"><div class="empty"><div class="icon">⏳</div><p>Loading…</p></div></div>
@@ -377,7 +453,37 @@ async function uploadFiles(files) {
   }
   bar.style.width = '100%';
   setTimeout(() => { prog.style.display='none'; bar.style.width='0%'; }, 600);
+  // refresh quota and files
+  try { quotaData = await api('GET', '/users/me/quota'); refreshQuotaBar(); } catch {}
   await loadFiles(currentPage);
+}
+
+function refreshQuotaBar() {
+  const section = document.querySelector('.quota-section');
+  if (!section || !quotaData) return;
+  section.outerHTML = `
+    <div class="quota-section">
+      <div class="quota-label">
+        <span>💾 Storage — ${quotaData.usedFormatted} of ${quotaData.totalFormatted} used</span>
+        <span>${quotaData.percentUsed}%</span>
+      </div>
+      <div class="quota-bar-bg">
+        <div class="quota-bar-fill ${quotaData.percentUsed >= 80 ? 'warn' : ''}"
+             style="width:${quotaData.percentUsed}%"></div>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════════════════
+let searchTimer = null;
+function onSearch(v) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => {
+    searchQuery = v.trim();
+    loadFiles(0);
+  }, 350);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -385,8 +491,10 @@ async function uploadFiles(files) {
 // ═══════════════════════════════════════════════════════════════
 async function loadFiles(page = 0) {
   currentPage = page;
+  const params = new URLSearchParams({ page, size: 10, sort: 'uploadedAt,desc' });
+  if (searchQuery) params.set('name', searchQuery);
   try {
-    const data = await api('GET', '/files?page='+page+'&size=10&sort=uploadedAt,desc');
+    const data = await api('GET', '/files?' + params.toString());
     document.getElementById('fileCount').textContent =
       data.totalElements ? data.totalElements + ' file' + (data.totalElements !== 1 ? 's' : '') : '';
     renderFiles(data.content);
@@ -397,7 +505,9 @@ async function loadFiles(page = 0) {
 function renderFiles(files) {
   const el = document.getElementById('fileList');
   if (!files.length) {
-    el.innerHTML = `<div class="empty"><div class="icon">📭</div><p>No files yet — upload something!</p></div>`;
+    el.innerHTML = searchQuery
+      ? `<div class="empty"><div class="icon">🔍</div><p>No files match "<strong>${searchQuery}</strong>"</p></div>`
+      : `<div class="empty"><div class="icon">📭</div><p>No files yet — upload something!</p></div>`;
     return;
   }
   el.innerHTML = `
@@ -411,6 +521,7 @@ function renderFiles(files) {
           <td>
             <div class="file-actions">
               <button class="btn btn-sm btn-success" onclick="downloadFile(${f.id},'${esc(f.originalFilename)}')">⬇ Download</button>
+              <button class="btn btn-sm btn-info"    onclick="openShareModal(${f.id},'${esc(f.originalFilename)}')">🔗 Share</button>
               <button class="btn btn-sm btn-danger"  onclick="deleteFile(${f.id},'${esc(f.originalFilename)}')">🗑 Delete</button>
             </div>
           </td>
@@ -446,8 +557,91 @@ async function deleteFile(id, name) {
   try {
     await api('DELETE', '/files/'+id);
     toast('Deleted ' + name, 'success');
+    try { quotaData = await api('GET', '/users/me/quota'); refreshQuotaBar(); } catch {}
     await loadFiles(currentPage);
   } catch(err) { toast(err.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SHARE MODAL
+// ═══════════════════════════════════════════════════════════════
+async function openShareModal(fileId, fileName) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'shareOverlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="modal-title">🔗 Share "${fileName}"</div>
+      <div class="form-group">
+        <label>Expires after (hours) — leave blank for no expiry</label>
+        <input type="number" id="shareExpiry" placeholder="e.g. 24" min="1" max="8760">
+      </div>
+      <div id="shareLinkArea"></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeShareModal()">Cancel</button>
+        <button class="btn btn-primary" style="width:auto" id="genShareBtn" onclick="generateShareLink(${fileId})">Generate Link</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function generateShareLink(fileId) {
+  const expiry = document.getElementById('shareExpiry').value;
+  const body = expiry ? { expiryHours: parseInt(expiry) } : {};
+  document.getElementById('genShareBtn').disabled = true;
+  try {
+    const data = await api('POST', '/files/'+fileId+'/share', body);
+    document.getElementById('shareLinkArea').innerHTML = `
+      <div class="share-link-area">
+        <p style="font-size:.82rem;color:#059669;margin-top:.5rem;">✓ Link generated successfully</p>
+        <div class="share-link-box">
+          <a href="${data.url}" target="_blank">${data.url}</a>
+          <button class="copy-btn" onclick="copyLink('${esc(data.url)}')">Copy</button>
+        </div>
+        ${data.expiresAt ? `<p style="font-size:.78rem;color:#aaa;margin-top:.5rem;">Expires: ${new Date(data.expiresAt).toLocaleString()}</p>` : ''}
+      </div>`;
+  } catch(err) {
+    toast(err.message, 'error');
+    document.getElementById('genShareBtn').disabled = false;
+  }
+}
+
+function copyLink(url) {
+  navigator.clipboard.writeText(url).then(() => toast('Link copied!', 'success'));
+}
+
+function closeShareModal() {
+  const el = document.getElementById('shareOverlay');
+  if (el) el.remove();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  PASSWORD CHANGE
+// ═══════════════════════════════════════════════════════════════
+async function handleChangePassword() {
+  const current  = val('pwCurrent');
+  const newPw    = val('pwNew');
+  const confirm  = val('pwConfirm');
+  const errEl    = document.getElementById('pwErr');
+  errEl.textContent = '';
+
+  if (!current || !newPw || !confirm) { errEl.textContent = 'All fields are required'; return; }
+  if (newPw.length < 6)               { errEl.textContent = 'New password must be at least 6 characters'; return; }
+  if (newPw !== confirm)              { errEl.textContent = 'Passwords do not match'; return; }
+
+  const btn = document.getElementById('pwBtn');
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    await api('PUT', '/users/me/password', { currentPassword: current, newPassword: newPw });
+    toast('Password updated successfully', 'success');
+    document.getElementById('pwCurrent').value = '';
+    document.getElementById('pwNew').value = '';
+    document.getElementById('pwConfirm').value = '';
+  } catch(err) {
+    errEl.textContent = err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Update';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -459,7 +653,7 @@ async function handleLogout() {
 }
 
 function doLogout() {
-  token = null; refreshTok = null; currentUser = null;
+  token = null; refreshTok = null; currentUser = null; quotaData = null;
   localStorage.removeItem('mc_token'); localStorage.removeItem('mc_refresh');
   renderAuth('login'); toast('Logged out', 'info');
 }

@@ -38,6 +38,9 @@ public class FileStorageService {
     @Value("${storage.location}")
     private String storageLocation;
 
+    @Value("${storage.quota-bytes}")
+    private long quotaBytes;
+
     public FileMetadata store(MultipartFile file, User owner) {
         if (file.isEmpty()) {
             throw new FileStorageException("Cannot store an empty file");
@@ -51,6 +54,11 @@ public class FileStorageService {
 
         if (BLOCKED_EXTENSIONS.contains(extension)) {
             throw new FileStorageException("File type '" + extension + "' is not allowed");
+        }
+
+        long used = fileMetadataRepository.sumSizeByOwner(owner);
+        if (used + file.getSize() > quotaBytes) {
+            throw new FileStorageException("Storage quota exceeded. Used: " + used + " bytes, quota: " + quotaBytes + " bytes");
         }
 
         try {
@@ -75,8 +83,20 @@ public class FileStorageService {
         }
     }
 
-    public Page<FileMetadata> listFiles(User owner, Pageable pageable) {
+    public Page<FileMetadata> listFiles(User owner, String name, Pageable pageable) {
+        if (name != null && !name.isBlank()) {
+            return fileMetadataRepository
+                    .findAllByOwnerAndOriginalFilenameContainingIgnoreCase(owner, name, pageable);
+        }
         return fileMetadataRepository.findAllByOwner(owner, pageable);
+    }
+
+    public long getUsedBytes(User owner) {
+        return fileMetadataRepository.sumSizeByOwner(owner);
+    }
+
+    public long getQuotaBytes() {
+        return quotaBytes;
     }
 
     public Resource loadAsResource(Long fileId, User owner) {
@@ -100,6 +120,19 @@ public class FileStorageService {
         return fileMetadataRepository.findByIdAndOwner(fileId, owner)
                 .map(FileMetadata::getOriginalFilename)
                 .orElseThrow(() -> new ResourceNotFoundException("File not found or access denied"));
+    }
+
+    public Resource loadAsResourceDirect(FileMetadata metadata) {
+        try {
+            Path filePath = Paths.get(storageLocation).resolve(metadata.getStoredFilename());
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new FileStorageException("File is not readable: " + metadata.getOriginalFilename());
+            }
+            return resource;
+        } catch (MalformedURLException ex) {
+            throw new FileStorageException("Could not resolve file path", ex);
+        }
     }
 
     public void delete(Long fileId, User owner) {

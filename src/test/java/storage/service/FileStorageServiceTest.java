@@ -35,6 +35,7 @@ class FileStorageServiceTest {
     @BeforeEach
     void setup() {
         ReflectionTestUtils.setField(service, "storageLocation", tempDir.toString());
+        ReflectionTestUtils.setField(service, "quotaBytes", 524_288_000L); // 500 MB
     }
 
     @Test
@@ -71,6 +72,7 @@ class FileStorageServiceTest {
         when(file.getInputStream()).thenReturn(new ByteArrayInputStream(content));
 
         User owner = User.builder().id(1L).username("alice").build();
+        when(repository.sumSizeByOwner(owner)).thenReturn(0L);
         FileMetadata saved = FileMetadata.builder()
                 .id(1L).originalFilename("notes.txt").storedFilename("uuid.txt")
                 .contentType("text/plain").size(5L).owner(owner).build();
