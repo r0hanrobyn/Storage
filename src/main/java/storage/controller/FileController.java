@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -27,7 +26,7 @@ import storage.service.FileStorageService;
 import storage.service.ShareLinkService;
 import storage.service.UserService;
 
-@Tag(name = "Files", description = "Upload, list, download, delete, and share files")
+@Tag(name = "Files", description = "Upload, list, download, delete, share, and star files")
 @RestController
 @RequestMapping("/api/files")
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class FileController {
     private final ShareLinkService shareLinkService;
     private final UserService userService;
 
-    // ── Authenticated endpoints ──────────────────────────────────
+    // ── Upload ────────────────────────────────────────────────────
 
     @Operation(summary = "Upload a file")
     @SecurityRequirement(name = "bearerAuth")
@@ -51,19 +50,24 @@ public class FileController {
         return ResponseEntity.ok(FileResponse.from(metadata));
     }
 
-    @Operation(summary = "List files owned by the current user (paginated, searchable)")
+    // ── List active files (paginated, searchable, filterable) ─────
+
+    @Operation(summary = "List files (paginated; ?name=search; ?starred=true)")
     @SecurityRequirement(name = "bearerAuth")
     @GetMapping
     public ResponseEntity<Page<FileResponse>> listFiles(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(required = false) String name,
+            @RequestParam(defaultValue = "false") boolean starred,
             @PageableDefault(size = 20) Pageable pageable) {
 
         User owner = userService.findByUsername(userDetails.getUsername());
-        Page<FileResponse> files = fileStorageService.listFiles(owner, name, pageable)
+        Page<FileResponse> files = fileStorageService.listFiles(owner, name, starred, pageable)
                 .map(FileResponse::from);
         return ResponseEntity.ok(files);
     }
+
+    // ── Download ──────────────────────────────────────────────────
 
     @Operation(summary = "Download a file by ID")
     @SecurityRequirement(name = "bearerAuth")
@@ -83,7 +87,9 @@ public class FileController {
                 .body(resource);
     }
 
-    @Operation(summary = "Delete a file by ID")
+    // ── Soft delete (move to bin) ─────────────────────────────────
+
+    @Operation(summary = "Move a file to the bin")
     @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
@@ -95,7 +101,58 @@ public class FileController {
         return ResponseEntity.noContent().build();
     }
 
-    // ── Share endpoints ──────────────────────────────────────────
+    // ── Star toggle ───────────────────────────────────────────────
+
+    @Operation(summary = "Toggle the starred flag on a file")
+    @SecurityRequirement(name = "bearerAuth")
+    @PatchMapping("/{id}/star")
+    public ResponseEntity<FileResponse> toggleStar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User owner = userService.findByUsername(userDetails.getUsername());
+        FileMetadata updated = fileStorageService.toggleStar(id, owner);
+        return ResponseEntity.ok(FileResponse.from(updated));
+    }
+
+    // ── Bin ───────────────────────────────────────────────────────
+
+    @Operation(summary = "List files in the bin")
+    @SecurityRequirement(name = "bearerAuth")
+    @GetMapping("/bin")
+    public ResponseEntity<Page<FileResponse>> listBin(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PageableDefault(size = 20) Pageable pageable) {
+
+        User owner = userService.findByUsername(userDetails.getUsername());
+        Page<FileResponse> files = fileStorageService.listBin(owner, pageable).map(FileResponse::from);
+        return ResponseEntity.ok(files);
+    }
+
+    @Operation(summary = "Restore a file from the bin")
+    @SecurityRequirement(name = "bearerAuth")
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<FileResponse> restore(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User owner = userService.findByUsername(userDetails.getUsername());
+        return ResponseEntity.ok(FileResponse.from(fileStorageService.restore(id, owner)));
+    }
+
+    @Operation(summary = "Permanently delete a file from the bin")
+    @SecurityRequirement(name = "bearerAuth")
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> permanentDelete(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        User owner = userService.findByUsername(userDetails.getUsername());
+        fileStorageService.permanentDelete(id, owner);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ── Share ─────────────────────────────────────────────────────
 
     @Operation(summary = "Create or refresh a share link for a file")
     @SecurityRequirement(name = "bearerAuth")

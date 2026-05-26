@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\2381861\\\\OneDrive - Cognizant\\\\storage\\\\storage\\\\src\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(./mvnw compile *)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}

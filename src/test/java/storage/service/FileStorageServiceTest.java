@@ -35,7 +35,7 @@ class FileStorageServiceTest {
     @BeforeEach
     void setup() {
         ReflectionTestUtils.setField(service, "storageLocation", tempDir.toString());
-        ReflectionTestUtils.setField(service, "quotaBytes", 524_288_000L); // 500 MB
+        ReflectionTestUtils.setField(service, "quotaBytes", 524_288_000L);
     }
 
     @Test
@@ -87,7 +87,7 @@ class FileStorageServiceTest {
     @Test
     void loadAsResource_notFound_throws() {
         User owner = User.builder().id(1L).username("alice").build();
-        when(repository.findByIdAndOwner(99L, owner)).thenReturn(Optional.empty());
+        when(repository.findByIdAndOwnerAndDeletedFalse(99L, owner)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.loadAsResource(99L, owner))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -96,7 +96,7 @@ class FileStorageServiceTest {
     @Test
     void getOriginalFilename_notFound_throws() {
         User owner = User.builder().id(1L).username("alice").build();
-        when(repository.findByIdAndOwner(99L, owner)).thenReturn(Optional.empty());
+        when(repository.findByIdAndOwnerAndDeletedFalse(99L, owner)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getOriginalFilename(99L, owner))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -105,7 +105,7 @@ class FileStorageServiceTest {
     @Test
     void delete_notFound_throws() {
         User owner = User.builder().id(1L).username("alice").build();
-        when(repository.findByIdAndOwner(99L, owner)).thenReturn(Optional.empty());
+        when(repository.findByIdAndOwnerAndDeletedFalse(99L, owner)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete(99L, owner))
                 .isInstanceOf(ResourceNotFoundException.class);

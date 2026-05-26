@@ -14,13 +14,27 @@ import java.util.Optional;
 @Repository
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, Long> {
 
-    Page<FileMetadata> findAllByOwner(User owner, Pageable pageable);
+    // ── Active files ──────────────────────────────────────────────
+    Page<FileMetadata> findAllByOwnerAndDeletedFalse(User owner, Pageable pageable);
 
-    Page<FileMetadata> findAllByOwnerAndOriginalFilenameContainingIgnoreCase(
+    Page<FileMetadata> findAllByOwnerAndDeletedFalseAndOriginalFilenameContainingIgnoreCase(
             User owner, String name, Pageable pageable);
 
-    Optional<FileMetadata> findByIdAndOwner(Long id, User owner);
+    Page<FileMetadata> findAllByOwnerAndDeletedFalseAndStarredTrue(User owner, Pageable pageable);
 
-    @Query("SELECT COALESCE(SUM(f.size), 0) FROM FileMetadata f WHERE f.owner = :owner")
+    Page<FileMetadata> findAllByOwnerAndDeletedFalseAndStarredTrueAndOriginalFilenameContainingIgnoreCase(
+            User owner, String name, Pageable pageable);
+
+    // ── Bin (soft-deleted) ────────────────────────────────────────
+    Page<FileMetadata> findAllByOwnerAndDeletedTrue(User owner, Pageable pageable);
+
+    // ── By id + owner (active only) ───────────────────────────────
+    Optional<FileMetadata> findByIdAndOwnerAndDeletedFalse(Long id, User owner);
+
+    // ── Bin item ──────────────────────────────────────────────────
+    Optional<FileMetadata> findByIdAndOwnerAndDeletedTrue(Long id, User owner);
+
+    // ── Quota: only count active (non-deleted) files ──────────────
+    @Query("SELECT COALESCE(SUM(f.size), 0) FROM FileMetadata f WHERE f.owner = :owner AND f.deleted = false")
     long sumSizeByOwner(@Param("owner") User owner);
 }

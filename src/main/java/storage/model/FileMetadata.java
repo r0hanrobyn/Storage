@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
@@ -38,6 +39,17 @@ public class FileMetadata {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User owner;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean starred = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
+    @Column
+    private Instant deletedAt;
 
     @PrePersist
     protected void onCreate() {

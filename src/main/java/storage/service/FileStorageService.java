@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -40,6 +41,8 @@ public class FileStorageService {
 
     @Value("${storage.quota-bytes}")
     private long quotaBytes;
+
+    // ── Upload ────────────────────────────────────────────────────
 
     public FileMetadata store(MultipartFile file, User owner) {
         if (file.isEmpty()) {
@@ -83,43 +86,80 @@ public class FileStorageService {
         }
     }
 
-    public Page<FileMetadata> listFiles(User owner, String name, Pageable pageable) {
+    // ── List (active files) ───────────────────────────────────────
+
+    public Page<FileMetadata> listFiles(User owner, String name, boolean starredOnly, Pageable pageable) {
+        if (starredOnly) {
+            if (name != null && !name.isBlank()) {
+                return fileMetadataRepository
+                        .findAllByOwnerAndDeletedFalseAndStarredTrueAndOriginalFilenameContainingIgnoreCase(owner, name, pageable);
+            }
+            return fileMetadataRepository.findAllByOwnerAndDeletedFalseAndStarredTrue(owner, pageable);
+        }
         if (name != null && !name.isBlank()) {
             return fileMetadataRepository
-                    .findAllByOwnerAndOriginalFilenameContainingIgnoreCase(owner, name, pageable);
+                    .findAllByOwnerAndDeletedFalseAndOriginalFilenameContainingIgnoreCase(owner, name, pageable);
         }
-        return fileMetadataRepository.findAllByOwner(owner, pageable);
+        return fileMetadataRepository.findAllByOwnerAndDeletedFalse(owner, pageable);
     }
 
-    public long getUsedBytes(User owner) {
-        return fileMetadataRepository.sumSizeByOwner(owner);
+    // ── Bin ───────────────────────────────────────────────────────
+
+    public Page<FileMetadata> listBin(User owner, Pageable pageable) {
+        return fileMetadataRepository.findAllByOwnerAndDeletedTrue(owner, pageable);
     }
 
-    public long getQuotaBytes() {
-        return quotaBytes;
-    }
+    // ── Star toggle ───────────────────────────────────────────────
 
-    public Resource loadAsResource(Long fileId, User owner) {
-        FileMetadata metadata = fileMetadataRepository.findByIdAndOwner(fileId, owner)
+    public FileMetadata toggleStar(Long fileId, User owner) {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwnerAndDeletedFalse(fileId, owner)
                 .orElseThrow(() -> new ResourceNotFoundException("File not found or access denied"));
+        metadata.setStarred(!metadata.isStarred());
+        return fileMetadataRepository.save(metadata);
+    }
+
+    // ── Soft delete ───────────────────────────────────────────────
+
+    public void delete(Long fileId, User owner) {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwnerAndDeletedFalse(fileId, owner)
+                .orElseThrow(() -> new ResourceNotFoundException("File not found or access denied"));
+        metadata.setDeleted(true);
+        metadata.setDeletedAt(Instant.now());
+        fileMetadataRepository.save(metadata);
+    }
+
+    // ── Restore from bin ──────────────────────────────────────────
+
+    public FileMetadata restore(Long fileId, User owner) {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwnerAndDeletedTrue(fileId, owner)
+                .orElseThrow(() -> new ResourceNotFoundException("File not found in bin"));
+        metadata.setDeleted(false);
+        metadata.setDeletedAt(null);
+        return fileMetadataRepository.save(metadata);
+    }
+
+    // ── Permanent delete ──────────────────────────────────────────
+
+    public void permanentDelete(Long fileId, User owner) {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwnerAndDeletedTrue(fileId, owner)
+                .orElseThrow(() -> new ResourceNotFoundException("File not found in bin"));
 
         try {
             Path filePath = Paths.get(storageLocation).resolve(metadata.getStoredFilename());
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (!resource.exists() || !resource.isReadable()) {
-                throw new FileStorageException("File is not readable: " + metadata.getOriginalFilename());
-            }
-            return resource;
-        } catch (MalformedURLException ex) {
-            throw new FileStorageException("Could not resolve file path", ex);
+            Files.deleteIfExists(filePath);
+        } catch (IOException ex) {
+            throw new FileStorageException("Failed to delete file from disk", ex);
         }
+
+        fileMetadataRepository.delete(metadata);
     }
 
-    public String getOriginalFilename(Long fileId, User owner) {
-        return fileMetadataRepository.findByIdAndOwner(fileId, owner)
-                .map(FileMetadata::getOriginalFilename)
+    // ── Download ──────────────────────────────────────────────────
+
+    public Resource loadAsResource(Long fileId, User owner) {
+        FileMetadata metadata = fileMetadataRepository.findByIdAndOwnerAndDeletedFalse(fileId, owner)
                 .orElseThrow(() -> new ResourceNotFoundException("File not found or access denied"));
+        return loadAsResourceDirect(metadata);
     }
 
     public Resource loadAsResourceDirect(FileMetadata metadata) {
@@ -135,17 +175,19 @@ public class FileStorageService {
         }
     }
 
-    public void delete(Long fileId, User owner) {
-        FileMetadata metadata = fileMetadataRepository.findByIdAndOwner(fileId, owner)
+    public String getOriginalFilename(Long fileId, User owner) {
+        return fileMetadataRepository.findByIdAndOwnerAndDeletedFalse(fileId, owner)
+                .map(FileMetadata::getOriginalFilename)
                 .orElseThrow(() -> new ResourceNotFoundException("File not found or access denied"));
+    }
 
-        try {
-            Path filePath = Paths.get(storageLocation).resolve(metadata.getStoredFilename());
-            Files.deleteIfExists(filePath);
-        } catch (IOException ex) {
-            throw new FileStorageException("Failed to delete file", ex);
-        }
+    // ── Quota ─────────────────────────────────────────────────────
 
-        fileMetadataRepository.delete(metadata);
+    public long getUsedBytes(User owner) {
+        return fileMetadataRepository.sumSizeByOwner(owner);
+    }
+
+    public long getQuotaBytes() {
+        return quotaBytes;
     }
 }
